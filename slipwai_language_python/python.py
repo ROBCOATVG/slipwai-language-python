@@ -1,6 +1,7 @@
 """The Python backend: each service's package, its manifest and committed lock, and the verify script above them."""
 from __future__ import annotations
 
+from ... import registry as protocol
 from ...assets import LANGUAGE_ROOT, asset_tree
 from ...backends import UV_VERSION
 from ...naming import python_package_name
@@ -260,3 +261,15 @@ def repository_files(
     """The verify script above the services; nothing else sits at the root for this backend."""
     files[verify] = python_verify(services)
     return files
+
+
+LANGUAGE = protocol.Language(
+    (protocol.Family("python"),),
+    (protocol.Backend("python", "python", {
+        protocol.SERVICE_FILES: service_files,
+        protocol.NAME_SERVICE: name_service,
+        protocol.REPOSITORY_FILES: repository_files,
+        protocol.READY_PATH: "/ready",
+        protocol.HEALTH_BODY: '{"status":"ok"}',
+    }),),
+)
