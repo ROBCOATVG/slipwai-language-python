@@ -52,8 +52,8 @@ BASE_DEVELOPMENT = ("mypy==2.3.1", "pytest==9.1.1", "ruff==0.16.3")
 
 # What each feature pins, split by where it belongs: `runtime` is what the service imports when it is
 # running and is therefore what the production image carries, `development` what only the gate needs. One
-# table rather than a branch per feature, and kept in step with `PACKAGE_EDITS` in
-# assets/backing-services/prune.py, which drops exactly these distributions again when the feature is
+# table rather than a branch per feature, and kept in step with `package_edits` in `python_prune_rows.py`,
+# which the pruning script reads to drop exactly these distributions again when the feature is
 # pruned; the factory's test suite asserts the two agree.
 FEATURE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
     # The binary wheel, so an install needs no libpq and no compiler.
