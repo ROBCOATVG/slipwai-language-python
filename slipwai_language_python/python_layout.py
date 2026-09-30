@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from ... import registry as protocol
+from ..flag_route import EntryWiring
 from ..flags import FlagReader
 
 # The write side: the event port, the adapters behind it, their contract suites and the migrations, and each
@@ -109,8 +110,31 @@ READER = FlagReader(
     call='flag_enabled("checkout-v2")',
 )
 
+# How the flag source is wired into this backend's entry point, keyed by the HTTP option whose app takes it
+# (`flag_route.wire_entry`). No `flag_resource`: this backend's transports are handed the source, and
+# discover no route.
+# The placeholder sits where this line *sorts* in `main.py`'s import block rather than at the end of
+# it: ruff's isort rule is part of a generated Python project's own lint, and a block that ends with
+# `.flags` after `.logging_setup` is I001 — a project that fails its first `make lint` for a reason
+# nothing it can see put there.
+# `uvicorn.run` wraps `build_app`, so that call already spans lines and carries a trailing comma —
+# which is `ruff format`'s instruction to give every argument a line of its own. An argument appended
+# beside the one before it is reformatted, and a generated project's `make lint` runs the formatter in
+# check mode, so it fails there. Hence `argument_line` and no `argument`: `openapi_export.py` builds
+# the same app on one line and takes the fragment instead.
+WIRING = {
+    "fastapi": EntryWiring(
+        entry="src/delivery_starter/main.py",
+        line="from .flags import default_source",
+        argument=", default_source()",
+        argument_line="            default_source(),",
+    ),
+}
+
 ANSWERS: dict[protocol.Member[Any], object] = {
     protocol.WRITE_SIDE_FILES: WRITE_SIDE,
     protocol.READ_SIDE_FILES: READ_SIDE,
     protocol.FLAG_READER: READER,
+    protocol.ENTRY_WIRING: WIRING,
+    protocol.FLAG_RESOURCE: {},
 }
