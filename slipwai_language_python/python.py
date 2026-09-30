@@ -13,6 +13,7 @@ from ..composition import wire_store
 from ..flag_route import wire_entry
 from ..flags import flag_reader
 from ..openapi import published_document
+from .python_prune_rows import PRUNE_ROWS
 
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
@@ -264,7 +265,7 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python"),),
+    (protocol.Family("python", {protocol.PRUNE_ROWS: PRUNE_ROWS}),),
     (protocol.Backend("python", "python", {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
