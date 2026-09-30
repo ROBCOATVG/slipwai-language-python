@@ -37,4 +37,5 @@ BACKEND: dict[protocol.Member[Any], object] = {
         ),
         "descriptor": "python",
     },
+    protocol.MIGRATIONS_IN_PRODUCTION: {"command": ["python", "migrations/apply.py"]},
 }
