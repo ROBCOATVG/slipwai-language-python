@@ -13,7 +13,7 @@ import tomllib
 
 from support import FactoryTestCase
 
-from slipwai.assets import PRUNER, ROOT
+from slipwai.assets import ROOT
 from slipwai.backends import UV_VERSION
 from slipwai.project.languages.python import (
     FEATURE_REQUIREMENTS,
@@ -21,6 +21,7 @@ from slipwai.project.languages.python import (
     lock_suffix,
     requirements,
 )
+from slipwai.project.pruner import prune_rows
 from slipwai.selection import Selection
 
 LOCKS = ROOT / "assets/languages/python/locks"
@@ -152,7 +153,7 @@ class UvTest(FactoryTestCase):
             added = {pin.split("==")[0] for pin in set(runtime) | set(development) - base}
             added -= {pin.split("==")[0] for pin in base}
             self.assertEqual(
-                set(PRUNER.PACKAGE_EDITS["python"][feature]["packages"]), added, feature
+                set(prune_rows(["python"])["python"]["package_edits"][feature]["packages"]), added, feature
             )
             # And the table this reads is the one the manifest is written from.
             self.assertIn(feature, FEATURE_REQUIREMENTS)
