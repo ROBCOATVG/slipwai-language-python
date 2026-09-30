@@ -13,6 +13,7 @@ from ..composition import wire_store
 from ..flag_route import wire_entry
 from ..flags import flag_reader
 from ..openapi import published_document
+from . import python_layout as layout
 
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
@@ -271,5 +272,6 @@ LANGUAGE = protocol.Language(
         protocol.REPOSITORY_FILES: repository_files,
         protocol.READY_PATH: "/ready",
         protocol.HEALTH_BODY: '{"status":"ok"}',
+        **layout.ANSWERS,
     }),),
 )
