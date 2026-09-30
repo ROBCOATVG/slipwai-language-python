@@ -4,11 +4,14 @@ what the gate is called, where the event model's code lives, and what `make muta
 Moved here from core's per-backend tables (S05), keyed by the protocol's member constants."""
 from __future__ import annotations
 
+from typing import Any
+
 from ... import registry as protocol
 from ...backends import PYTHON_VERSION
 from ...naming import python_package_name
 from ...services import App
 from ...tooling import service_qualifier
+from ..renovate import WORKFLOWS, RenovateRules
 
 
 def event_model_paths(project_name: str, service: str) -> dict[str, str]:
@@ -36,9 +39,28 @@ def procfile(project_name: str, service: App) -> str:
 
 
 # One CPython minor for the project, at its root, derived from the constant CI and the image read (`pins.py`).
-FAMILY_ANSWERS = {protocol.PIN_FILES: {".python-version": f"{PYTHON_VERSION}\n"}, protocol.MAKEFILE_VARIABLES: None}
-ANSWERS = {
+# Renovate reads `pyproject.toml` and the `uv.lock` beside it through `pep621`, `.python-version` through `pyenv`,
+# and the CPython minor CI installs through a custom manager, because no manager reads an action's inputs.
+RENOVATE = RenovateRules(
+    managers=("pep621", "pyenv"),
+    group=("python", ("pep621",), "the Python services' dependencies, and the uv lock beside each manifest"),
+    toolchain={
+        "customType": "regex",
+        "description": "The CPython minor `actions/setup-python` installs, which no manager reads.",
+        "managerFilePatterns": [WORKFLOWS],
+        "matchStrings": ["python-version: '?(?<currentValue>\\d+\\.\\d+(?:\\.\\d+)?)'?"],
+        "depNameTemplate": "python",
+        "datasourceTemplate": "python-version",
+    },
+)
+FAMILY_ANSWERS: dict[protocol.Member[Any], object] = {
+    protocol.PIN_FILES: {".python-version": f"{PYTHON_VERSION}\n"},
+    protocol.MAKEFILE_VARIABLES: None,
+    protocol.RENOVATE_RULES: RENOVATE,
+}
+ANSWERS: dict[protocol.Member[Any], object] = {
     protocol.PROCFILE: procfile,
+    protocol.OPT_IN_FLAG_TRANSPORTS: frozenset(),
     # `.venv/` is what `uv sync` builds beside each service's manifest, from the committed `uv.lock`
     # that *is* committed. `apps/*/requirements.txt` is the runtime half of that lock, exported by
     # `make build` for the buildpack and thrown away after: derived from the lock, never edited, and a
