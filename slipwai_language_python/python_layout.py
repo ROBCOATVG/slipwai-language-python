@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from ... import registry as protocol
+from ..flags import FlagReader
 
 # The write side: the event port, the adapters behind it, their contract suites and the migrations, and each
 # transport's and identity provider's own files.
@@ -99,7 +100,17 @@ READ_SIDE: dict[str, dict[str, str]] = {
     },
 }
 
+# Where this backend's feature-flag reader is committed, where it lands in a service, and how a slice asks
+# it. Emitted only under a managed target (`flags.flag_reader`).
+READER = FlagReader(
+    tree="python/flags",
+    source="src/delivery_starter/flags.py",
+    tests="tests/test_flags.py",
+    call='flag_enabled("checkout-v2")',
+)
+
 ANSWERS: dict[protocol.Member[Any], object] = {
     protocol.WRITE_SIDE_FILES: WRITE_SIDE,
     protocol.READ_SIDE_FILES: READ_SIDE,
+    protocol.FLAG_READER: READER,
 }
