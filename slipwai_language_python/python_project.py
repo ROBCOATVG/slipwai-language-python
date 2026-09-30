@@ -5,7 +5,10 @@ Moved here from core's per-backend tables (S05), keyed by the protocol's member 
 from __future__ import annotations
 
 from ... import registry as protocol
+from ...backends import PYTHON_VERSION
 from ...naming import python_package_name
+from ...services import App
+from ...tooling import service_qualifier
 
 
 def event_model_paths(project_name: str, service: str) -> dict[str, str]:
@@ -19,7 +22,23 @@ def event_model_paths(project_name: str, service: str) -> dict[str, str]:
     }
 
 
+def procfile(project_name: str, service: App) -> str:
+    """The start command of a Python service, for the buildpack: it has no other way to know that the package
+    lives under `src/`. Nothing else in the project reads this file."""
+    package = python_package_name(service_qualifier(project_name, service))
+    return (
+        "# The production start command, read by the Paketo buildpack `make build` runs; `make dev` does\n"
+        "# not use it. `src` is prepended to PYTHONPATH because the package lives under src/, exactly as\n"
+        "# scripts/verify says — prepended, not set, because the buildpack's own PYTHONPATH is where the\n"
+        "# installed packages are; replacing it starts a container that cannot import uvicorn.\n"
+        f"web: PYTHONPATH=src:$PYTHONPATH python -m {package}.main\n"
+    )
+
+
+# One CPython minor for the project, at its root, derived from the constant CI and the image read (`pins.py`).
+FAMILY_ANSWERS = {protocol.PIN_FILES: {".python-version": f"{PYTHON_VERSION}\n"}, protocol.MAKEFILE_VARIABLES: None}
 ANSWERS = {
+    protocol.PROCFILE: procfile,
     # `.venv/` is what `uv sync` builds beside each service's manifest, from the committed `uv.lock`
     # that *is* committed. `apps/*/requirements.txt` is the runtime half of that lock, exported by
     # `make build` for the buildpack and thrown away after: derived from the lock, never edited, and a

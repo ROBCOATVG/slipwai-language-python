@@ -40,7 +40,7 @@ def service_files(event: bool, selection: Selection, target: str = "none") -> di
     wire_store(files, selection, "python")
     # The published contract, committed beside the service: which of the two shapes it takes is the same
     # condition that decides whether `/api/flags` is a route at all.
-    files.update(published_document(selection, target))
+    files.update(published_document(selection, target, "python", "fastapi"))
     # Last, because the selection decides which dependencies are in the manifest — and which of the
     # committed locks is the one resolved from exactly that manifest.
     files["pyproject.toml"] = python_pyproject(files["pyproject.toml"], selection)
@@ -269,7 +269,7 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python", toolchain.FAMILY | deploy.FAMILY | layout.FAMILY_ANSWERS | {protocol.PRUNE_ROWS: PRUNE_ROWS}),),
+    (protocol.Family("python", toolchain.FAMILY | deploy.FAMILY | layout.FAMILY_ANSWERS | project.FAMILY_ANSWERS | {protocol.PRUNE_ROWS: PRUNE_ROWS}),),
     (protocol.Backend("python", "python", toolchain.BACKEND | deploy.BACKEND | {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
