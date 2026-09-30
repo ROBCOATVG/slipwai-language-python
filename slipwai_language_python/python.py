@@ -13,6 +13,7 @@ from ..composition import wire_store
 from ..flag_route import wire_entry
 from ..flags import flag_reader
 from ..openapi import published_document
+from . import python_toolchain as toolchain
 
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
@@ -264,8 +265,8 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python"),),
-    (protocol.Backend("python", "python", {
+    (protocol.Family("python", toolchain.FAMILY),),
+    (protocol.Backend("python", "python", toolchain.BACKEND | {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
         protocol.REPOSITORY_FILES: repository_files,
