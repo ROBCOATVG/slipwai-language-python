@@ -13,7 +13,7 @@ from ..composition import wire_store
 from ..flag_route import wire_entry
 from ..flags import flag_reader
 from ..openapi import published_document
-from .python_deploy import BACKEND as DEPLOY
+from . import python_deploy as deploy
 
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
@@ -265,8 +265,8 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python"),),
-    (protocol.Backend("python", "python", DEPLOY | {
+    (protocol.Family("python", deploy.FAMILY),),
+    (protocol.Backend("python", "python", deploy.BACKEND | {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
         protocol.REPOSITORY_FILES: repository_files,

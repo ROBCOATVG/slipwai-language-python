@@ -1,4 +1,5 @@
-"""The Python backend's answers about production: how a service becomes an image, and what it is told there.
+"""The Python answers about production and CI: how a service becomes an image, what it is told there, and how
+CI sets Python and uv up.
 
 Beside `python.py` rather than inside it so that module keeps room under the line budget for the answers the
 other slices move; its `LANGUAGE` merges these in, and they are its answers like any other. The recipe
@@ -9,8 +10,32 @@ from __future__ import annotations
 from typing import Any
 
 from ... import registry as protocol
-from ...backends import APP
+from ...backends import APP, PYTHON_VERSION, UV_VERSION
 from ...images import CPYTHON_VERSION, PACK
+from ...services import App
+
+
+def ci_toolchain_setup(services: list[App]) -> str:
+    """Python from `actions/setup-python`, uv at the factory's pin, and uv's cache keyed on every lock.
+
+    uv is this backend's toolchain, and no runner ships it. Installed from PyPI at the factory's pin rather
+    than through a third-party action: this job already asks PyPI for everything else, and an action is one
+    more thing that has to resolve on whichever forge the project landed on. The cache is uv's own download
+    cache, keyed on the committed locks — `uv sync --locked` installs exactly what they name, so a run that
+    changes no lock downloads nothing.
+    """
+    return (
+        "      - uses: actions/setup-python@v6\n        with:\n"
+        f"          python-version: '{PYTHON_VERSION}'\n"
+        f"      - run: python3 -m pip install --disable-pip-version-check -q uv=={UV_VERSION}\n"
+        "      - uses: actions/cache@v4\n        with:\n          path: ~/.cache/uv\n"
+        "          key: uv-${{ runner.os }}-${{ hashFiles("
+        + ", ".join(f"'{s.path}/uv.lock'" for s in services)
+        + ") }}\n"
+    )
+
+
+FAMILY: dict[protocol.Member[Any], object] = {protocol.CI_TOOLCHAIN_SETUP: ci_toolchain_setup}
 
 # `project.toml` beside the service, read by `pack build --path <the service>`: this backend's image builder
 # packs that directory alone, so the upload list is written there.
