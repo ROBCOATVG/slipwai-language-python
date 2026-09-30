@@ -15,6 +15,7 @@ from ..flags import flag_reader
 from ..openapi import published_document
 from . import python_deploy as deploy
 from . import python_layout as layout
+from . import python_project as project
 from . import python_toolchain as toolchain
 from .python_prune_rows import PRUNE_ROWS
 
@@ -276,5 +277,6 @@ LANGUAGE = protocol.Language(
         protocol.READY_PATH: "/ready",
         protocol.HEALTH_BODY: '{"status":"ok"}',
         **layout.ANSWERS,
+        **project.ANSWERS,
     }),),
 )
