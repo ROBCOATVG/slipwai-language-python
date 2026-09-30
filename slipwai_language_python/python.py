@@ -265,7 +265,7 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python"),),
+    (protocol.Family("python", layout.FAMILY_ANSWERS),),
     (protocol.Backend("python", "python", {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
