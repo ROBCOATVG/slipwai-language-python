@@ -16,6 +16,7 @@ from ..openapi import published_document
 from . import python_deploy as deploy
 from . import python_layout as layout
 from . import python_toolchain as toolchain
+from .python_prune_rows import PRUNE_ROWS
 
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
@@ -54,8 +55,8 @@ BASE_DEVELOPMENT = ("mypy==2.3.1", "pytest==9.1.1", "ruff==0.16.3")
 
 # What each feature pins, split by where it belongs: `runtime` is what the service imports when it is
 # running and is therefore what the production image carries, `development` what only the gate needs. One
-# table rather than a branch per feature, and kept in step with `PACKAGE_EDITS` in
-# assets/backing-services/prune.py, which drops exactly these distributions again when the feature is
+# table rather than a branch per feature, and kept in step with `package_edits` in `python_prune_rows.py`,
+# which the pruning script reads to drop exactly these distributions again when the feature is
 # pruned; the factory's test suite asserts the two agree.
 FEATURE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
     # The binary wheel, so an install needs no libpq and no compiler.
@@ -267,7 +268,7 @@ def repository_files(
 
 
 LANGUAGE = protocol.Language(
-    (protocol.Family("python", toolchain.FAMILY | deploy.FAMILY | layout.FAMILY_ANSWERS),),
+    (protocol.Family("python", toolchain.FAMILY | deploy.FAMILY | layout.FAMILY_ANSWERS | {protocol.PRUNE_ROWS: PRUNE_ROWS}),),
     (protocol.Backend("python", "python", toolchain.BACKEND | deploy.BACKEND | {
         protocol.SERVICE_FILES: service_files,
         protocol.NAME_SERVICE: name_service,
