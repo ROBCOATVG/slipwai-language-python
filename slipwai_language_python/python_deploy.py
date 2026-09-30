@@ -12,6 +12,23 @@ from ... import registry as protocol
 from ...backends import APP
 from ...images import CPYTHON_VERSION, PACK
 
+# `project.toml` beside the service, read by `pack build --path <the service>`: this backend's image builder
+# packs that directory alone, so the upload list is written there.
+SERVICE_DESCRIPTOR = """# Read by `pack build --path <this directory>` (`make build`): what the upload leaves out.
+#
+# `uv.lock` is excluded deliberately, and `make build` exports its runtime half to `requirements.txt`
+# first. The builder's Python group picks its package manager from what it finds, and a lock in the
+# upload sends it to fetch uv from a GitHub release inside the build — a third host to be reachable, for
+# a resolution this repository has already done. The exported file carries the same versions and their
+# hashes. `.venv` is this machine's environment, for this machine's platform and interpreter; the image
+# builds its own.
+[_]
+schema-version = "0.2"
+
+[io.buildpacks]
+exclude = ["uv.lock", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache"]
+"""
+
 BACKEND: dict[protocol.Member[Any], object] = {
     protocol.IMAGE_BUILDER: {
         "tool": "pack",
@@ -23,9 +40,8 @@ BACKEND: dict[protocol.Member[Any], object] = {
         # is running and not the gate's mypy, pytest and ruff. Hashes and all, derived every time, so it
         # can never become a second dependency list that drifts from the first.
         #
-        # `uv.lock` itself stays out of the upload (`images.SERVICE_DESCRIPTORS`, which `descriptor` names),
-        # which is what makes the buildpack read that file: the pinned builder's Python group selects its
-        # package manager by what
+        # `uv.lock` itself stays out of the upload (`SERVICE_DESCRIPTOR` above), which is what makes the
+        # buildpack read that file: the pinned builder's Python group selects its package manager by what
         # it finds, and a `uv.lock` in the upload sends it to install uv from a GitHub release inside the
         # build. That is a third host to be reachable from wherever `make build` runs, for a resolution
         # this repository has already done and committed. The day the builder ships uv itself, this
@@ -35,10 +51,10 @@ BACKEND: dict[protocol.Member[Any], object] = {
             f"{PACK} --path {APP} --env BP_CPYTHON_VERSION={CPYTHON_VERSION} "
             "--env BP_PIP_REQUIREMENT=requirements.txt $(PACK_FLAGS)"
         ),
-        "descriptor": "python",
     },
     protocol.MIGRATIONS_IN_PRODUCTION: {"command": ["python", "migrations/apply.py"]},
     # psycopg reads it as libpq does, where `require` is "encrypt, do not verify".
     # Per managed-database kind; `images.py`, above `POSTGRES_SSLMODE_KINDS`, says how each was measured.
     protocol.POSTGRES_SSLMODE: {"rds": "require", "flexible-server": "require"},
+    protocol.SERVICE_DESCRIPTORS: {"project.toml": SERVICE_DESCRIPTOR},
 }
