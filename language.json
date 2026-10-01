@@ -1,0 +1,19 @@
+{
+  "name": "python",
+  "core": ">=9.0,<10",
+  "order": 20,
+  "family": "python",
+  "backends": {
+    "python": {
+      "label": "Python — pip, Ruff, pytest",
+      "targets": ["none", "existing", "aws", "azure"],
+      "options": {
+        "event-store": ["memory", "sqlite", "postgres"],
+        "http": ["none", "fastapi"],
+        "auth": ["none", "keycloak", "cognito", "entra", "auth0"],
+        "users": ["none", "keycloak", "cognito", "auth0"]
+      },
+      "defaults": {"http": "fastapi"}
+    }
+  }
+}

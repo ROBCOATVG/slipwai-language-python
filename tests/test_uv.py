@@ -11,20 +11,19 @@ from __future__ import annotations
 import tempfile
 import tomllib
 
+import checkout_languages
 from support import FactoryTestCase
 
 from slipwai.assets import ROOT
 from slipwai.backends import UV_VERSION
-from slipwai.project.languages.python import (
-    FEATURE_REQUIREMENTS,
-    LOCK_FEATURES,
-    lock_suffix,
-    requirements,
-)
 from slipwai.project.pruner import prune_rows
 from slipwai.selection import Selection
 
-LOCKS = ROOT / "assets/languages/python/locks"
+# This package, as the loader imported it: a test reaches a language through the loader, never by name.
+PYTHON = checkout_languages.package("python").python
+FEATURE_REQUIREMENTS, LOCK_FEATURES = PYTHON.FEATURE_REQUIREMENTS, PYTHON.LOCK_FEATURES
+lock_suffix, requirements = PYTHON.lock_suffix, PYTHON.requirements
+LOCKS = checkout_languages.language_root("python") / "python/locks"
 
 
 def manifest(repo, service: str = "apps/service") -> dict:
