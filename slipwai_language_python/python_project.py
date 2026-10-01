@@ -6,12 +6,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from ... import registry as protocol
-from ...backends import PYTHON_VERSION
-from ...naming import python_package_name
-from ...services import App
-from ...tooling import service_qualifier
-from ..renovate import WORKFLOWS, RenovateRules
+from slipwai import registry as protocol
+from slipwai.backends import PYTHON_VERSION
+from slipwai.naming import python_package_name
+from slipwai.project.renovate import WORKFLOWS, RenovateRules
+from slipwai.services import App
+from slipwai.tooling import service_qualifier
 
 
 def event_model_paths(project_name: str, service: str) -> dict[str, str]:

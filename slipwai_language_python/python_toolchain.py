@@ -1,7 +1,7 @@
 """Python's toolchain: how a service in this language installs, starts, checks and formats itself.
 
-These are the language's answers to the toolchain members of the backend protocol (`src/slipwai/registry.py`,
-whose shapes are fixed in `specs/001-slipwai-2-language-addons/contracts/backend-protocol.md`). `BACKEND` is
+These are the language's answers to the toolchain members of the backend protocol (slipwai's `registry` module,
+whose shapes are fixed in its backend-protocol contract). `BACKEND` is
 what the `python` backend answers and `FAMILY` what the family does. `python.py`'s `LANGUAGE` takes both in. A
 command spells a service's path `APP` and its family's verify script `VERIFY`, which `tooling.for_app` stamps.
 """
@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ... import registry as protocol
-from ...backends import APP, PYTHON_VERSION, UV_VERSION, VERIFY, Tooling
-from ...naming import python_package_name
-from ...tooling import for_app
+from slipwai import registry as protocol
+from slipwai.backends import APP, PYTHON_VERSION, UV_VERSION, VERIFY, Tooling
+from slipwai.naming import python_package_name
+from slipwai.tooling import for_app
 
 TOOLING: Tooling = {
     "install": f"./{VERIFY} --install-only",

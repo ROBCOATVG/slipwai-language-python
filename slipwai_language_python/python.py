@@ -1,33 +1,39 @@
 """The Python backend: each service's package, its manifest and committed lock, and the verify script above them."""
 from __future__ import annotations
 
-from ... import registry as protocol
-from ...assets import LANGUAGE_ROOT, asset_tree
-from ...backends import UV_VERSION
-from ...naming import python_package_name
-from ...selection import Selection
-from ...services import App
-from ...tooling import service_qualifier
-from ..backing_services import backing_service_service_files
-from ..composition import wire_store
-from ..flag_route import wire_entry
-from ..flags import flag_reader
-from ..openapi import published_document
+from pathlib import Path
+
+from slipwai import registry as protocol
+from slipwai.assets import asset_tree
+from slipwai.backends import UV_VERSION
+from slipwai.naming import python_package_name
+from slipwai.project.backing_services import backing_service_service_files
+from slipwai.project.composition import wire_store
+from slipwai.project.flag_route import wire_entry
+from slipwai.project.flags import flag_reader
+from slipwai.project.openapi import published_document
+from slipwai.selection import Selection
+from slipwai.services import App
+from slipwai.tooling import service_qualifier
+
 from . import python_deploy as deploy
 from . import python_layout as layout
 from . import python_project as project
 from . import python_toolchain as toolchain
 from .python_prune_rows import PRUNE_ROWS
 
+# This package's own assets, laid out as core's: `languages/python/…` and `backing-services/python/…`.
+ASSETS = Path(__file__).resolve().parents[1] / "assets"
+
 
 def service_files(event: bool, selection: Selection, target: str = "none") -> dict[str, str]:
     """What this backend puts in a service's directory, keyed relative to it."""
-    files = asset_tree(LANGUAGE_ROOT / "python/app")
+    files = asset_tree(ASSETS / "languages/python/app")
     if event and not selection.has("memory"):
         # Only for a backend whose event-store axis is not offered yet: a port with a shape and no adapter
         # behind it. Once the axis is asked, the port and its adapters arrive together from the assets, and
         # this placeholder would only be a second definition of the same thing.
-        files.update(asset_tree(LANGUAGE_ROOT / "python/event-port"))
+        files.update(asset_tree(ASSETS / "languages/python/event-port"))
     files.update(backing_service_service_files(selection, "python"))
     # The flag reader, only where there is somewhere to deploy: a flag is what makes a merge and a release
     # two decisions, and `--target none` has neither the mechanism nor the unsafe push. See `flags.py`.
@@ -136,7 +142,7 @@ def service_lock(selection: Selection) -> str:
     offline, and two people generating the same answers a week apart must get the same versions. The
     template's name is rewritten into the project's by `name_service`, exactly as the npm locks' is.
     """
-    return (LANGUAGE_ROOT / f"python/locks/uv{lock_suffix(selection)}.lock").read_text()
+    return (ASSETS / f"languages/python/locks/uv{lock_suffix(selection)}.lock").read_text()
 
 
 def python_verify(services: list[App]) -> str:

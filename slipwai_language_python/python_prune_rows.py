@@ -1,7 +1,7 @@
 """The Python family's rows for the generated pruning script (`prune_rows`, S06).
 
 Written into a project's `scripts/backing-services.py` when it has a Python service, and read by the factory's
-own pruner. The shape is fixed in `specs/001-slipwai-2-language-addons/contracts/backend-protocol.md`. The paths
+own pruner. The shape is fixed in slipwai's backend-protocol contract. The paths
 glob because a Python service's package directory is named after the project.
 """
 from __future__ import annotations
