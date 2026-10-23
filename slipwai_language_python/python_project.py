@@ -22,6 +22,10 @@ def event_model_paths(project_name: str, service: str) -> dict[str, str]:
         "domain": f"{service}/src/{documented_python_package}/domain/<context>/decider.py",
         "usecase": f"{service}/src/{documented_python_package}/application/<context>/<use_case>.py",
         "test": f"{service}/tests/test_<slice>.py (pytest)",
+        # Read only for a service on the state-stored rung: the port it loads and saves current state
+        # through, where an event-sourced service has the event store's. Answered whichever rung a
+        # project is on, because the rung is the project maker's answer and not the language's.
+        "repository": f"{service}/src/{documented_python_package}/application/ports/repository.py",
     }
 
 

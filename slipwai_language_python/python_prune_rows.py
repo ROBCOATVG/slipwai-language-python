@@ -10,12 +10,17 @@ PRUNE_ROWS = {
     "marked_files": ("src/*/settings.py", "src/*/main.py"),
     "owned_files": {
         "sqlite": (
+            "src/*/adapters/driven/repository_sqlite.py",
+            "tests/contract/test_repository_sqlite.py",
             "src/*/adapters/driven/event_store_sqlite.py",
             "src/*/adapters/driven/checkpoint_store_sqlite.py",
             "tests/contract/test_event_store_sqlite.py",
             "tests/contract/test_checkpoint_store_sqlite.py",
         ),
         "postgres": (
+            "src/*/adapters/driven/repository_postgres.py",
+            "migrations/001_states.sql",
+            "tests/integration/test_repository_postgres.py",
             "src/*/adapters/driven/event_store_postgres.py",
             "src/*/adapters/driven/checkpoint_store_postgres.py",
             "migrations/apply.py",
@@ -25,6 +30,7 @@ PRUNE_ROWS = {
             "migrations/004_event_tags.sql",
             "tests/integration/test_event_store_postgres.py",
             "tests/integration/test_checkpoint_store_postgres.py",
+            "scripts/seed.py",
         ),
         "fastapi": (
             "src/*/adapters/driving/http/app.py",

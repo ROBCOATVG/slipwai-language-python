@@ -16,11 +16,13 @@ from slipwai.project.entry_stores import STORED, EntryStore, hash_marked
 from slipwai.project.flag_route import EntryWiring
 from slipwai.project.flags import FlagReader
 
+from .python_state import STATE_WRITE
+
 # The write side: the event port, the adapters behind it, their contract suites and the migrations, and each
 # transport's and identity provider's own files.
 # Emitted under the template package name; `language_files` renames the directory after the project
 # and rewrites the imports, which is why every path here says `delivery_starter`.
-WRITE_SIDE: dict[str, dict[str, str]] = {
+WRITE_SIDE: dict[str, dict[str, Any]] = {
     "memory": {
         "src/delivery_starter/application/ports/events.py": "events.py",
         "src/delivery_starter/adapters/driven/event_store_memory.py": "event_store_memory.py",
@@ -38,6 +40,10 @@ WRITE_SIDE: dict[str, dict[str, str]] = {
         "migrations/apply.py": "migrations_apply.py",
         "migrations/001_events.sql": "../sql/001_events.sql",
         "migrations/002_events_append_only.sql": "../sql/002_events_append_only.sql",
+        # The seed door: `make seed-<service> FILE=<json>` appends the events a slice's `try-it.json`
+        # gives, through this store, with a deterministic identity so a replay records nothing twice.
+        # Under the durable store because it needs one (slipwai's feedback-points plan, D4).
+        "scripts/seed.py": "seed.py",
     },
     "fastapi": {
         "src/delivery_starter/adapters/driving/http/app.py": "http_app.py",
@@ -66,6 +72,14 @@ WRITE_SIDE: dict[str, dict[str, str]] = {
         "src/delivery_starter/adapters/driving/http/users/oidc_keycloak.py": "users_oidc_keycloak.py",
         "tests/users/test_users_oidc_keycloak.py": "tests/test_users_oidc_keycloak.py",
     },
+}
+
+# The state-stored rung's rows, under the one `state` key core reads for a service answered `write-model:
+# state` (`rungs.rung_rows`): the repository port and its adapters in place of the log, and the transport's
+# and identity providers' files exactly as above, because neither of those is about what the store holds.
+WRITE_SIDE["state"] = {
+    **STATE_WRITE,
+    **{feature: WRITE_SIDE[feature] for feature in ("fastapi", "keycloak", "users-keycloak")},
 }
 
 # The read side: the checkpoint port and its adapters, the catch-up runner, and the migrations that create the
@@ -138,15 +152,15 @@ PYTHON_MEMORY_IMPORT = (
     "from .adapters.driven.event_store_memory import create_in_memory_event_store\n"
 )
 PYTHON_OPEN_HEAD = "def open_event_store(settings: Settings) -> ReadinessProbe:\n"
-PYTHON_OPENER_DOC = '''    """The event store this project answered the event-store question with, opened once, here,
-    and handed to whatever needs it. Nothing else in this service constructs one.
+PYTHON_OPENER_DOC = '''    """The event store this project selected, opened once, here, and handed to whatever
+    needs it. Nothing else in this service constructs one.
 
     It takes the checked environment rather than reading `os.environ`: `settings.py` is where
     this service's variables are held to a shape, and a store reading the environment itself
     would be a second place they are read from.
 '''
 PYTHON_PRUNE_DOC = """
-    The marked block is the answer; delete it — which is what `./init --event-store memory`
+    The marked block is the answer; delete it — which is what `./init --persistence memory`
     does — and the in-memory store below is what is left, so both states are valid at once.
 
     The adapter is imported inside that block rather than at the top of this module — the one

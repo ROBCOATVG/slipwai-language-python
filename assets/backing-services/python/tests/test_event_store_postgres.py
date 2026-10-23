@@ -283,7 +283,7 @@ def test_a_conditional_append_is_refused_by_an_event_in_flight_when_the_boundary
     assert read.wait(timeout=10), "a boundary was never drawn after the append committed"
     # The decision now knows about the claim, which is the whole point of waiting.
     found = decided["events"]
-    assert isinstance(found, list)
+    assert isinstance(found, tuple)
     assert [event.type for event in found] == ["SeatClaimed"]
 
     # And a caller that decided anyway is refused by the condition rather than by luck.

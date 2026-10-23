@@ -20,6 +20,7 @@ from . import python_deploy as deploy
 from . import python_layout as layout
 from . import python_project as project
 from . import python_toolchain as toolchain
+from .python_state import wire_state
 from .python_prune_rows import PRUNE_ROWS
 
 # This package's own assets, laid out as core's: `languages/python/…` and `backing-services/python/…`.
@@ -42,8 +43,12 @@ def service_files(event: bool, selection: Selection, target: str = "none") -> di
     # `/api/flags` in front of the browser app. Removed, not left unresolved, where there is no reader.
     wire_entry(files, target, "python")
     # And the store's half: which adapter this project opens, and what `/ready` is handed. See
-    # `composition.py` — the entry point is the only place that may name the answer.
-    wire_store(files, selection, "python")
+    # `composition.py` — the entry point is the only place that may name the answer. A service on the
+    # state rung with a store opens its repository there instead (`python_state.py`).
+    if selection.write_model == "state" and selection.has("memory"):
+        wire_state(files, selection, layout.STORE)
+    else:
+        wire_store(files, selection, "python")
     # The published contract, committed beside the service: which of the two shapes it takes is the same
     # condition that decides whether `/api/flags` is a route at all.
     files.update(published_document(selection, target, "python"))
@@ -256,7 +261,7 @@ def name_service(project_name: str, service: App, files: dict[str, str]) -> dict
             new_path = f"{service.path}/src/{python_package}/" + path.removeprefix(old_package_path)
         if new_path != path:
             files[new_path] = files.pop(path).replace("delivery_starter", python_package)
-        elif path.startswith(f"{service.path}/tests/"):
+        elif path.startswith((f"{service.path}/tests/", f"{service.path}/scripts/")):
             files[path] = files[path].replace("delivery_starter", python_package)
     # The published document names the service the way FastAPI does — after this package — so the token
     # is resolved here rather than by a second rule about what a document may call a service.

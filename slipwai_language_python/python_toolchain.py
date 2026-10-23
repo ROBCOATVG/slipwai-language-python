@@ -17,6 +17,10 @@ from slipwai.tooling import for_app
 TOOLING: Tooling = {
     "install": f"./{VERIFY} --install-only",
     "migrate": f"./{VERIFY} --migrate",
+    # The seed door, for one service rather than looped over all of them as `--migrate` is: the file a
+    # slice's story gives belongs to the service it names. The Makefile's `seed-<service> FILE=<json>`
+    # target hands the file through, inside the durable store's marked region.
+    "seed": f"PYTHONPATH={APP}/src uv run --project {APP} --no-sync python {APP}/scripts/seed.py $(FILE)",
     "integration": f"./{VERIFY} --integration-only",
     "ci_image": f"python:{PYTHON_VERSION}-bookworm",
     "ci_install": f"./{VERIFY} --install-only",
@@ -63,8 +67,12 @@ def dev_command(qualifier: str, path: str, verify: str) -> str:
     )
 
 
-def event_store_directory(path: str) -> str:
-    """Where one service's driven adapters live, for prose that has to point at them."""
+def persistence_directory(path: str) -> str:
+    """Where one service's driven adapters live, for prose that has to point at them.
+
+    One answer for both rungs: the event store's adapters and the repository's land in the same
+    directory, and the prose that reads this says which of the two it means. The member was
+    `event_store_directory` until the rung became a question."""
     return f"{path}/src/<package>/adapters/driven/"
 
 
@@ -75,7 +83,7 @@ BACKEND: dict[protocol.Member[Any], object] = {
     protocol.DEV_COMMAND: dev_command,
     # The environment `uv sync` builds beside each service, and uv's own download cache above them.
     protocol.COMPOSE_CACHES: (f"/workspace/{APP}/.venv", "/root/.cache/uv"),
-    protocol.EVENT_STORE_DIRECTORY: event_store_directory,
+    protocol.PERSISTENCE_DIRECTORY: persistence_directory,
     protocol.NATIVE_COMMANDS: native_commands,
 }
 FAMILY: dict[protocol.Member[Any], object] = {protocol.FORMATTER: f"./{VERIFY} --format"}

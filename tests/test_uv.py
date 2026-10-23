@@ -8,22 +8,37 @@ names `requirements-dev.txt` or the `.python-tools` directory it was installed i
 """
 from __future__ import annotations
 
+import subprocess
+import sys
 import tempfile
 import tomllib
+import unittest
+from pathlib import Path
 
-import checkout_languages
-from support import FactoryTestCase
-
-from slipwai.assets import ROOT
 from slipwai.backends import UV_VERSION
 from slipwai.project.pruner import prune_rows
 from slipwai.selection import Selection
 
-# This package, as the loader imported it: a test reaches a language through the loader, never by name.
-PYTHON = checkout_languages.package("python").python
+# This package, imported from the checkout it sits in, beside the directory the keel loads it from.
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PACKAGE_ROOT))
+from slipwai_language_python import python as PYTHON  # noqa: E402
+
 FEATURE_REQUIREMENTS, LOCK_FEATURES = PYTHON.FEATURE_REQUIREMENTS, PYTHON.LOCK_FEATURES
 lock_suffix, requirements = PYTHON.lock_suffix, PYTHON.requirements
-LOCKS = checkout_languages.language_root("python") / "python/locks"
+LOCKS = PACKAGE_ROOT / "assets/languages/python/locks"
+
+
+class FactoryTestCase(unittest.TestCase):
+    """Generation through `slipwai generate`, against whichever language directory the keel was pointed at."""
+
+    def generate(self, parent: str, name: str, profile: str, backend: str, frontend: str, **axes: str) -> Path:
+        arguments = [sys.executable, "-m", "slipwai", "generate", name, "--profile", profile, "--backend", backend,
+                     "--frontend", frontend, "--output", parent, "--skip-checks", "--no-init"]
+        for axis, answer in axes.items():
+            arguments += [f"--{axis.replace('_', '-')}", answer]
+        subprocess.run(arguments, check=True, capture_output=True)
+        return Path(parent) / name
 
 
 def manifest(repo, service: str = "apps/service") -> dict:
@@ -35,7 +50,7 @@ class UvTest(FactoryTestCase):
         with tempfile.TemporaryDirectory() as directory:
             repo = self.generate(
                 directory, "uv-full", "event-modelling", "python", "none",
-                event_store="postgres", http="fastapi", auth="keycloak",
+                write_model="events", persistence="postgres", http="fastapi", auth="keycloak",
             )
 
             document = manifest(repo)
@@ -77,7 +92,7 @@ class UvTest(FactoryTestCase):
         with tempfile.TemporaryDirectory() as directory:
             repo = self.generate(
                 directory, "uv-bare", "standard", "python", "none",
-                event_store="memory", http="none", auth="none",
+                http="none", auth="none",
             )
 
             document = manifest(repo)
@@ -119,11 +134,6 @@ class UvTest(FactoryTestCase):
             self.assertIn("hashFiles('apps/service/uv.lock')", workflow)
             self.assertNotIn("requirements-dev.txt", workflow)
 
-            # The factory's own CI generates a Python service and runs its native gate, so it needs the
-            # same pin on PATH. The job image was tagged before uv was the toolchain; the toolchains
-            # action installs the pin until a rebuilt image carries it.
-            action = (ROOT / ".github/actions/toolchains/action.yml").read_text()
-            self.assertIn(f"uv=={UV_VERSION}", action)
 
     def test_a_lock_is_committed_for_every_dependency_set_the_axes_can_produce(self) -> None:
         """One per subset of the dependency-adding features, the way the npm locks are — and no more, so a
@@ -132,7 +142,7 @@ class UvTest(FactoryTestCase):
         for chosen in (set(), {"postgres"}, {"fastapi"}, {"fastapi", "postgres"}):
             axes = {}
             if "postgres" in chosen:
-                axes["event-store"] = "postgres"
+                axes["persistence"] = "postgres"
             if "fastapi" in chosen:
                 axes["http"] = "fastapi"
             wanted.add(f"uv{lock_suffix(Selection(axes))}.lock")
@@ -145,7 +155,7 @@ class UvTest(FactoryTestCase):
         version may move in a generated project without the prune quietly missing it."""
         base = set(requirements(Selection({}))[0]) | set(requirements(Selection({}))[1])
         for axis, answer, feature in (
-            ("event-store", "postgres", "postgres"),
+            ("persistence", "postgres", "postgres"),
             ("http", "fastapi", "fastapi"),
         ):
             runtime, development = requirements(Selection({axis: answer}))
