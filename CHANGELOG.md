@@ -3,6 +3,15 @@
 No releases yet. Release notes are recorded here newest first, one entry per released version; the entry being
 written is `changelog.d/`.
 
+## 1.1.2 — PATCH
+
+**A state-stored Python service with a long package name passes its own lint.** The repository's contract tests
+import the adapter in parentheses, so a package name past about twenty characters no longer pushes the line over
+100 columns and fails `make verify`.
+
+**Catch-up.** `slipwai migrate` brings the two test files; or wrap the adapter import in
+`tests/contract/test_repository_memory.py` and `tests/integration/test_repository_postgres.py` by hand.
+
 ## 1.1.1 — PATCH
 
 **A Python service type-checks under Git's bash on Windows.** `scripts/verify` joins `MYPYPATH` with `;`
