@@ -20,7 +20,9 @@ from concurrent.futures import ThreadPoolExecutor
 import psycopg
 from contract.repository_contract import RepositoryContract
 
-from delivery_starter.adapters.driven.repository_postgres import create_postgres_repository
+from delivery_starter.adapters.driven.repository_postgres import (
+    create_postgres_repository,
+)
 from delivery_starter.application.ports.repository import (
     NO_STATE,
     Repository,
