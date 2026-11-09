@@ -191,8 +191,10 @@ for app in $apps; do
   # suites under `tests/`, and `tests/integration/`, whose modules import each other by bare name because
   # that is how pytest puts them on the path. A directory that is not there is ignored. The settings —
   # `check_untyped_defs` above all — are in the service's `pyproject.toml`, so a bare `mypy src tests`
-  # from the service directory is the same check.
-  mypy_path="$app/src:$app/tests:$app/tests/integration"
+  # from the service directory is the same check. Joined with `;` under Git's bash on Windows, where Python
+  # splits a path list on it and MSYS leaves a relative list as it is; with `:` everywhere else, as always.
+  case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) sep=';' ;; *) sep=':' ;; esac
+  mypy_path="$app/src$sep$app/tests$sep$app/tests/integration"
   # The environment above, without asking uv to check it again for every tool in turn.
   run="uv run --project $app --no-sync"
   case "$mode" in
