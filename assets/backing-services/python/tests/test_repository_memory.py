@@ -11,8 +11,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 from contract.repository_contract import RepositoryContract
 
-from delivery_starter.adapters.driven.repository_memory import create_in_memory_repository
-from delivery_starter.application.ports.repository import NO_STATE, Repository, Saved
+from delivery_starter.adapters.driven.repository_memory import (
+    create_in_memory_repository,
+)
+from delivery_starter.application.ports.repository import (
+    NO_STATE,
+    Repository,
+    Saved,
+)
 
 
 class TestInMemoryRepository(RepositoryContract):
